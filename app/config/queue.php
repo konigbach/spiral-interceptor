@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Spiral\Queue\Driver\SyncDriver;
 use Spiral\RoadRunner\Jobs\Queue\AMQPCreateInfo;
 use Spiral\RoadRunner\Jobs\Queue\BeanstalkCreateInfo;
+use Spiral\RoadRunner\Jobs\Queue\KafkaCreateInfo;
 use Spiral\RoadRunner\Jobs\Queue\MemoryCreateInfo;
 use Spiral\RoadRunner\Jobs\Queue\SQSCreateInfo;
 use Spiral\RoadRunnerBridge\Queue\Queue;
@@ -18,7 +19,7 @@ return [
     /**
      *  Default queue connection name
      */
-    'default' => env('QUEUE_CONNECTION', 'in-memory'),
+    'default' => 'rr-kafka',
 
     /**
      *  Aliases for queue connections, if you want to use domain specific queues
@@ -43,6 +44,10 @@ return [
             'driver' => 'roadrunner',
             'pipeline' => 'memory',
         ],
+        'rr-kafka' => [
+            'driver' => 'roadrunner',
+            'pipeline' => 'kafka',
+        ]
     ],
 
     /**
@@ -59,13 +64,12 @@ return [
             // php app.php queue:pause local
             'consume' => true,
         ],
-        // 'amqp' => [
-        //     'connector' => new AMQPCreateInfo('bus', ...),
-        //     // Don't consume jobs for this pipeline on start
-        //     // You can run consumer for this pipeline via console command
-        //     // php app.php queue:resume local
-        //     'consume' => false
-        // ],
+         'kafka' => [
+             'connector' => new KafkaCreateInfo(
+                 name: 'kafka',
+             ),
+             'consume' => true
+         ],
         //
         // 'beanstalk' => [
         //     'connector' => new BeanstalkCreateInfo('bus', ...),
@@ -93,7 +97,7 @@ return [
          * @link https://spiral.dev/docs/queue-jobs#job-handler-registry
          */
         'handlers' => [
-            // 'ping' => \App\Endpoint\Job\Ping::class
+            'phones' => \App\Endpoint\Job\Phones\Topic::class,
         ],
 
         /**
@@ -118,7 +122,9 @@ return [
      */
     'interceptors' => [
         // 'push' => [],
-        // 'consume' => [],
+        'consume' => [
+            \App\Interceptor\TopicInterceptor::class,
+        ],
     ],
 
     'driverAliases' => [

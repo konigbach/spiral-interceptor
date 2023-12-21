@@ -5,7 +5,17 @@ jobs:
     pool:
         num_workers: 2
         max_worker_memory: 100
-    consume: {  }
+    consume: [ "kafka" ]
+    pipelines:
+      kafka:
+        driver: kafka
+        config:
+          auto_create_topics_enable: true
+          consumer_options:
+            topics: [ "phones" ]
 server:
     command: 'php app.php'
     relay: pipes
+
+kafka:
+  brokers: [ "127.0.0.1:9092" ]
